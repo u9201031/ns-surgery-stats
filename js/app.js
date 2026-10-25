@@ -38,6 +38,15 @@
     return crypto.randomUUID();
   }
 
+  function normalizeAnesthesia(v) {
+    const s = String(v || "").trim().toUpperCase();
+    if (!s) return "";
+    if (s === "LA" || s.includes("局麻") || s.includes("LOCAL")) return "局麻";
+    if (s === "GA" || s.includes("全麻") || s.includes("GENERAL")) return "全麻";
+    if (v === "局麻" || v === "全麻") return v;
+    return "";
+  }
+
   function fillCategorySelect(selectEl, selected) {
     if (!selectEl) return;
     const opts = window.NSTaxonomy.selectableOptions();
@@ -84,7 +93,7 @@
       age: $("#f-age").value.trim(),
       sex: $("#f-sex").value,
       emergency: $("#f-e").value.trim(),
-      la: $("#f-la").checked ? "LA" : "",
+      la: $("#f-la").value,
       tag: $("#f-tag").value.trim(),
       note: $("#f-note").value.trim(),
       categoryOverride: $("#f-category").value,
@@ -97,18 +106,13 @@
     const btnSave = $("#btn-save");
     const btnCancel = $("#btn-cancel-edit");
     if (title) title.textContent = "登錄手術病例";
-    if (btnSave) btnSave.textContent = "新增並自動分類";
+    if (btnSave) btnSave.textContent = "新增";
     if (btnCancel) btnCancel.hidden = true;
-    ["f-date", "f-chart", "f-name", "f-dx", "f-op", "f-surgeon", "f-age", "f-e", "f-tag", "f-note", "f-sex"].forEach((id) => {
+    ["f-date", "f-chart", "f-name", "f-dx", "f-op", "f-surgeon", "f-age", "f-e", "f-la", "f-tag", "f-note", "f-sex"].forEach((id) => {
       const el = $(`#${id}`);
       if (el) el.value = "";
     });
-    const la = $("#f-la");
-    if (la) la.checked = false;
     fillCategorySelect($("#f-category"), "");
-    const hint = $("#auto-hint");
-    if (hint) hint.textContent = "";
-    updateAutoHint();
   }
 
   function populateForm(rec) {
@@ -125,31 +129,10 @@
     $("#f-age").value = rec.age || "";
     $("#f-sex").value = rec.sex || "";
     $("#f-e").value = rec.emergency || "";
-    $("#f-la").checked = String(rec.la || "").toUpperCase() === "LA";
+    $("#f-la").value = normalizeAnesthesia(rec.la);
     $("#f-tag").value = rec.tag || "";
     $("#f-note").value = rec.note || "";
     fillCategorySelect($("#f-category"), rec.manualCategory ? rec.categoryId : "");
-    updateAutoHint();
-  }
-
-  function updateAutoHint() {
-    const form = readForm();
-    const existing = state.editingId
-      ? state.records.find((r) => r.id === state.editingId)
-      : null;
-    const draft = {
-      diagnosis: form.diagnosis,
-      procedure: form.procedure,
-      categoryCode: existing?.categoryCode || "",
-      tag: form.tag,
-    };
-    const result = window.NSClassify.classify(draft);
-    const override = form.categoryOverride;
-    const finalId = override || result.categoryId;
-    const label = window.NSClassify.labelOf(finalId);
-    $("#auto-hint").innerHTML = override
-      ? `手動指定：<strong>${label}</strong>`
-      : `自動分類：<strong>${label}</strong>（${result.reason}，信心 ${result.confidence}）`;
   }
 
   function upsertRecord(e) {
@@ -223,7 +206,7 @@
         manualCategory,
         sourceSheet: "手動登錄",
       });
-      toast("已新增並完成分類");
+      toast("已新增");
     }
     save();
     clearForm();
@@ -535,10 +518,6 @@
 
     $("#case-form").addEventListener("submit", upsertRecord);
     $("#btn-cancel-edit").addEventListener("click", clearForm);
-    ["f-dx", "f-op", "f-tag", "f-category"].forEach((id) => {
-      $(`#${id}`).addEventListener("input", updateAutoHint);
-      $(`#${id}`).addEventListener("change", updateAutoHint);
-    });
 
     $$(".year-select").forEach((sel) =>
       sel.addEventListener("change", () => {
@@ -601,7 +580,6 @@
     setView("entry");
   } catch (err) {
     console.error(err);
-    const hint = document.getElementById("auto-hint");
-    if (hint) hint.textContent = "初始化失敗，請強制重新整理頁面（Cmd+Shift+R）：" + err.message;
+    toast("初始化失敗，請強制重新整理頁面（Cmd+Shift+R）");
   }
 })();

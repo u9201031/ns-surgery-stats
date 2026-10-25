@@ -48,7 +48,7 @@ window.NSExcel = (() => {
       name: find("姓名", "name"),
       diagnosis: find("診斷", "diagnosis", "dx"),
       procedure: find("術式", "手術方式", "procedure", "op"),
-      la: find("la"),
+      la: find("la", "麻醉", "麻醉方式"),
       surgeon: find("主治", "執行醫師", "醫師", "vs", "surgeon"),
       emergency: find("e", "急診"),
       categoryCode: find("分類", "category", "分類碼"),
@@ -85,7 +85,15 @@ window.NSExcel = (() => {
       name: idx.name >= 0 && row[idx.name] != null ? String(row[idx.name]).trim() : "",
       diagnosis,
       procedure,
-      la: idx.la >= 0 && row[idx.la] != null ? String(row[idx.la]).trim() : "",
+      la: (() => {
+        if (idx.la < 0 || row[idx.la] == null) return "";
+        const raw = String(row[idx.la]).trim();
+        const u = raw.toUpperCase();
+        if (u === "LA" || raw.includes("局麻") || u.includes("LOCAL")) return "局麻";
+        if (u === "GA" || raw.includes("全麻") || u.includes("GENERAL")) return "全麻";
+        if (raw === "局麻" || raw === "全麻") return raw;
+        return raw;
+      })(),
       surgeon,
       emergency: idx.emergency >= 0 && row[idx.emergency] != null ? String(row[idx.emergency]).trim() : "",
       categoryCode,
@@ -145,7 +153,7 @@ window.NSExcel = (() => {
       姓名: r.name,
       診斷: r.diagnosis,
       術式: r.procedure,
-      LA: r.la,
+      麻醉方式: r.la,
       執行醫師: r.surgeon,
       E: r.emergency,
       原分類碼: r.categoryCode,
