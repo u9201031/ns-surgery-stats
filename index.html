@@ -82,14 +82,14 @@
                 <option value="F">F</option>
               </select>
             </label>
-            <label class="field">原分類碼（選填）
-              <input id="f-code" type="text" placeholder="例：LI / tumor / IA / PRTR" />
-            </label>
-            <label class="field">S/T/V
-              <input id="f-stv" type="text" placeholder="S / T / V / EV / ST" />
+            <label class="field span-2">分類
+              <select id="f-code"></select>
             </label>
             <label class="field">急診 E
-              <input id="f-e" type="text" placeholder="E" />
+              <select id="f-e">
+                <option value="">—</option>
+                <option value="E">E（急診）</option>
+              </select>
             </label>
             <label class="field">標記
               <input id="f-tag" type="text" placeholder="高位頸椎 / endoscopic…" />
@@ -97,7 +97,7 @@
             <label class="field" style="flex-direction:row;align-items:center;gap:8px;margin-top:22px">
               <input id="f-la" type="checkbox" /> LA（局部麻醉）
             </label>
-            <label class="field span-2">手動指定統計分類（可覆寫自動分類）
+            <label class="field span-2">統計細項（可覆寫自動分類）
               <select id="f-category"></select>
             </label>
             <label class="field span-2">備註

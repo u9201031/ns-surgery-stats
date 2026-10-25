@@ -38,6 +38,38 @@
     return crypto.randomUUID();
   }
 
+  function fillCodeSelect(selectEl, selected) {
+    selectEl.innerHTML = "";
+    for (const block of window.NSClassify.CODE_OPTIONS) {
+      if (block.group) {
+        const og = document.createElement("optgroup");
+        og.label = block.group;
+        for (const o of block.options) {
+          const opt = document.createElement("option");
+          opt.value = o.value;
+          opt.textContent = o.label;
+          og.appendChild(opt);
+        }
+        selectEl.appendChild(og);
+      } else {
+        const opt = document.createElement("option");
+        opt.value = block.value;
+        opt.textContent = block.label;
+        selectEl.appendChild(opt);
+      }
+    }
+    if (selected) {
+      const exists = [...selectEl.options].some((o) => o.value === selected);
+      if (!exists) {
+        const opt = document.createElement("option");
+        opt.value = selected;
+        opt.textContent = `${selected}（匯入）`;
+        selectEl.appendChild(opt);
+      }
+      selectEl.value = selected;
+    }
+  }
+
   function fillCategorySelect(selectEl, selected) {
     const opts = window.NSTaxonomy.selectableOptions();
     const groups = new Map();
@@ -48,7 +80,7 @@
     selectEl.innerHTML = "";
     const empty = document.createElement("option");
     empty.value = "";
-    empty.textContent = "（自動分類）";
+    empty.textContent = "（依上方分類／診斷自動判定）";
     selectEl.appendChild(empty);
     for (const [major, list] of groups) {
       const og = document.createElement("optgroup");
@@ -76,7 +108,6 @@
       age: $("#f-age").value.trim(),
       sex: $("#f-sex").value,
       categoryCode: $("#f-code").value.trim(),
-      stv: $("#f-stv").value.trim(),
       emergency: $("#f-e").value.trim(),
       la: $("#f-la").checked ? "LA" : "",
       tag: $("#f-tag").value.trim(),
@@ -90,7 +121,7 @@
     $("#form-title").textContent = "登錄手術病例";
     $("#btn-save").textContent = "新增並自動分類";
     $("#btn-cancel-edit").hidden = true;
-    ["f-date", "f-chart", "f-name", "f-dx", "f-op", "f-surgeon", "f-age", "f-code", "f-stv", "f-e", "f-tag", "f-note"].forEach((id) => {
+    ["f-date", "f-chart", "f-name", "f-dx", "f-op", "f-surgeon", "f-age", "f-code", "f-e", "f-tag", "f-note"].forEach((id) => {
       $(`#${id}`).value = "";
     });
     $("#f-sex").value = "";
@@ -113,13 +144,12 @@
     $("#f-surgeon").value = rec.surgeon || "";
     $("#f-age").value = rec.age || "";
     $("#f-sex").value = rec.sex || "";
-    $("#f-code").value = rec.categoryCode || "";
-    $("#f-stv").value = rec.stv || "";
+    fillCodeSelect($("#f-code"), rec.categoryCode || "");
     $("#f-e").value = rec.emergency || "";
     $("#f-la").checked = String(rec.la || "").toUpperCase() === "LA";
     $("#f-tag").value = rec.tag || "";
     $("#f-note").value = rec.note || "";
-    $("#f-category").value = rec.manualCategory ? rec.categoryId : "";
+    fillCategorySelect($("#f-category"), rec.manualCategory ? rec.categoryId : "");
     updateAutoHint();
   }
 
@@ -130,7 +160,6 @@
       procedure: form.procedure,
       categoryCode: form.categoryCode,
       tag: form.tag,
-      stv: form.stv,
     };
     const result = window.NSClassify.classify(draft);
     const override = form.categoryOverride;
@@ -163,7 +192,6 @@
       age: form.age,
       sex: form.sex,
       categoryCode: form.categoryCode,
-      stv: form.stv,
       emergency: form.emergency,
       la: form.la,
       tag: form.tag,
@@ -516,13 +544,14 @@
   }
 
   function bind() {
+    fillCodeSelect($("#f-code"));
     fillCategorySelect($("#f-category"));
 
     $$(".tab").forEach((t) => t.addEventListener("click", () => setView(t.dataset.view)));
 
     $("#case-form").addEventListener("submit", upsertRecord);
     $("#btn-cancel-edit").addEventListener("click", clearForm);
-    ["f-dx", "f-op", "f-code", "f-tag", "f-category", "f-stv"].forEach((id) => {
+    ["f-dx", "f-op", "f-code", "f-tag", "f-category"].forEach((id) => {
       $(`#${id}`).addEventListener("input", updateAutoHint);
       $(`#${id}`).addEventListener("change", updateAutoHint);
     });
