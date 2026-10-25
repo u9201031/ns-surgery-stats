@@ -114,6 +114,8 @@ window.NSExcel = (() => {
       const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: null, raw: true });
       if (!rows.length) continue;
       const headers = rows[0].map((h) => (h == null ? "" : String(h)));
+      // 第一欄標題空白但內容是日期時，視為「日期」欄（例如 114總表）
+      if (!headers[0] && rows.slice(1, 6).some((r) => r && r[0] instanceof Date)) headers[0] = "日期";
       const idx = headerIndex(headers);
       if (idx.date < 0 || idx.chartNo < 0) {
         warnings.push(`工作表「${sheetName}」缺少日期或病歷號欄，已跳過`);
