@@ -58,60 +58,6 @@ window.NSClassify = (() => {
     "高位頸椎": "spine.inst.highCervical",
   };
 
-  /** 登錄用分類下拉（顯示值＝總表常用分類碼） */
-  const CODE_OPTIONS = [
-    { value: "", label: "（請選擇／或依診斷自動分類）" },
-    { group: "脊椎", options: [
-      { value: "LD", label: "LD — 腰椎椎間盤（HIVD）" },
-      { value: "CD", label: "CD — 頸椎椎間盤（HIVD）" },
-      { value: "LS", label: "LS — 腰椎狹窄" },
-      { value: "CS", label: "CS — 頸椎狹窄" },
-      { value: "LI", label: "LI — 腰椎內固定" },
-      { value: "CI", label: "CI — 頸椎內固定" },
-      { value: "TI", label: "TI — 胸椎相關" },
-      { value: "spine tumor", label: "spine tumor — 脊椎腫瘤" },
-      { value: "spine others", label: "spine others — 脊椎其他" },
-      { value: "高位頸椎", label: "高位頸椎" },
-    ]},
-    { group: "腦腫瘤／血管／CVA", options: [
-      { value: "tumor", label: "tumor — 腦腫瘤" },
-      { value: "aneurysm", label: "aneurysm — 動脈瘤夾閉" },
-      { value: "AVM", label: "AVM" },
-      { value: "AVF", label: "AVF — 硬腦膜動靜脈瘻管" },
-      { value: "endarterectomy", label: "endarterectomy — 內膜切除" },
-      { value: "ICH", label: "ICH — 自發性腦出血" },
-      { value: "DC", label: "DC — 梗塞減壓" },
-    ]},
-    { group: "外傷／顱骨／感染／分流", options: [
-      { value: "EDH", label: "EDH" },
-      { value: "aSDH", label: "aSDH — 急性硬腦膜下出血" },
-      { value: "cSDH", label: "cSDH — 慢性硬腦膜下出血" },
-      { value: "tICH", label: "tICH — 外傷性腦出血" },
-      { value: "Cranioplasty", label: "Cranioplasty — 顱骨成形" },
-      { value: "VP shunt", label: "VP shunt" },
-      { value: "abscess", label: "abscess — 膿瘍" },
-      { value: "Brain empyema", label: "Brain empyema — 積膿" },
-    ]},
-    { group: "功能／周邊／血管內", options: [
-      { value: "PRTR", label: "PRTR — 三叉神經經皮處置" },
-      { value: "MVD", label: "MVD" },
-      { value: "CTS", label: "CTS — 腕隧道" },
-      { value: "PNS", label: "PNS — 周邊神經" },
-      { value: "IA", label: "IA — Thrombectomy" },
-      { value: "aneurysm (coiling)", label: "aneurysm (coiling) — 動脈瘤栓塞" },
-      { value: "TAE", label: "TAE / Transarterial" },
-      { value: "stent", label: "stent — 頸動脈支架" },
-      { value: "CC fistula", label: "CC fistula" },
-    ]},
-    { group: "其他", options: [
-      { value: "NB", label: "NB — 神經阻斷" },
-      { value: "PICC", label: "PICC" },
-      { value: "EVD", label: "EVD" },
-      { value: "ICP", label: "ICP" },
-      { value: "others", label: "others — 其他" },
-    ]},
-  ];
-
   function has(text, ...keys) {
     const t = norm(text);
     return keys.some((k) => t.includes(norm(k)));
@@ -222,7 +168,6 @@ window.NSClassify = (() => {
     if (has(t, "tps", "tlif", "plif", "fixation", "instrumentation", "pedicle")) {
       if (has(t, "c1", "c2", "occipito", "高位")) return "spine.inst.highCervical";
       if (has(t, "cervical", "acdf", "c3", "c4", "c5", "c6", "c7")) return "spine.inst.lowCervical";
-      if (has(t, "ict", "navigation", "o-arm", "image guided")) return "spine.inst.imageGuided";
       return "spine.inst.lumbar";
     }
 
@@ -257,12 +202,7 @@ window.NSClassify = (() => {
         if (has(tags, "高位頸椎") || has(dx + op, "c1", "c2", "occipito", "jefferson", "dens")) {
           id = "spine.inst.highCervical";
           reason += " → High Cervical";
-        } else if (has(op, "ict", "navigation", "image")) {
-          // keep low cervical but note image-guided as secondary preference only if clearly tagged
-          id = "spine.inst.lowCervical";
         }
-      } else if (code === "li" && has(op, "ict", "navigation") && has(tags, "image")) {
-        id = "spine.inst.imageGuided";
       }
 
       return { categoryId: id, confidence: "high", reason };
@@ -282,5 +222,5 @@ window.NSClassify = (() => {
     return row.label === "—" ? row.major : `${row.major} › ${row.label}`;
   }
 
-  return { classify, labelOf, CODE_MAP, CODE_OPTIONS };
+  return { classify, labelOf, CODE_MAP };
 })();
