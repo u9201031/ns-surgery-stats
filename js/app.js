@@ -39,6 +39,7 @@
   }
 
   function fillCategorySelect(selectEl, selected) {
+    if (!selectEl) return;
     const opts = window.NSTaxonomy.selectableOptions();
     const groups = new Map();
     for (const o of opts) {
@@ -63,6 +64,13 @@
       }
       selectEl.appendChild(og);
     }
+    if (selected && selectEl.value !== selected) {
+      const opt = document.createElement("option");
+      opt.value = selected;
+      opt.textContent = selected;
+      opt.selected = true;
+      selectEl.appendChild(opt);
+    }
   }
 
   function readForm() {
@@ -85,16 +93,21 @@
 
   function clearForm() {
     state.editingId = null;
-    $("#form-title").textContent = "登錄手術病例";
-    $("#btn-save").textContent = "新增並自動分類";
-    $("#btn-cancel-edit").hidden = true;
-    ["f-date", "f-chart", "f-name", "f-dx", "f-op", "f-surgeon", "f-age", "f-e", "f-tag", "f-note"].forEach((id) => {
-      $(`#${id}`).value = "";
+    const title = $("#form-title");
+    const btnSave = $("#btn-save");
+    const btnCancel = $("#btn-cancel-edit");
+    if (title) title.textContent = "登錄手術病例";
+    if (btnSave) btnSave.textContent = "新增並自動分類";
+    if (btnCancel) btnCancel.hidden = true;
+    ["f-date", "f-chart", "f-name", "f-dx", "f-op", "f-surgeon", "f-age", "f-e", "f-tag", "f-note", "f-sex"].forEach((id) => {
+      const el = $(`#${id}`);
+      if (el) el.value = "";
     });
-    $("#f-sex").value = "";
-    $("#f-la").checked = false;
-    $("#f-category").value = "";
-    $("#auto-hint").textContent = "";
+    const la = $("#f-la");
+    if (la) la.checked = false;
+    fillCategorySelect($("#f-category"), "");
+    const hint = $("#auto-hint");
+    if (hint) hint.textContent = "";
     updateAutoHint();
   }
 
@@ -581,8 +594,14 @@
     });
   }
 
-  bind();
-  clearForm();
-  renderAll();
-  setView("entry");
+  try {
+    bind();
+    clearForm();
+    renderAll();
+    setView("entry");
+  } catch (err) {
+    console.error(err);
+    const hint = document.getElementById("auto-hint");
+    if (hint) hint.textContent = "初始化失敗，請強制重新整理頁面（Cmd+Shift+R）：" + err.message;
+  }
 })();

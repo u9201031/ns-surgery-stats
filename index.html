@@ -94,10 +94,12 @@
             <label class="field" style="flex-direction:row;align-items:center;gap:8px;margin-top:22px">
               <input id="f-la" type="checkbox" /> LA（局部麻醉）
             </label>
-            <label class="field span-2">統計細項（可覆寫自動分類）
-              <select id="f-category"></select>
+            <label class="field span-4">統計細項
+              <select id="f-category">
+                <option value="">（依診斷／術式自動判定）</option>
+              </select>
             </label>
-            <label class="field span-2">備註
+            <label class="field span-4">備註
               <input id="f-note" type="text" />
             </label>
             <div class="span-4 suggest" id="auto-hint"></div>
@@ -184,10 +186,10 @@
   <div class="toast" id="toast"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-  <script src="js/taxonomy.js"></script>
-  <script src="js/classify.js"></script>
-  <script src="js/stats.js"></script>
-  <script src="js/excel.js"></script>
-  <script src="js/app.js"></script>
+  <script src="js/taxonomy.js?v=3"></script>
+  <script src="js/classify.js?v=3"></script>
+  <script src="js/stats.js?v=3"></script>
+  <script src="js/excel.js?v=3"></script>
+  <script src="js/app.js?v=3"></script>
 </body>
 </html>
