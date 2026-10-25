@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NS 手術登錄與統計</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="hero">
+      <div>
+        <h1 class="brand">NS 手術登錄與統計</h1>
+        <p class="subtitle">登錄病例後自動對應訓練醫院分類項目 · 彙整月統計 · 偵測同月多次手術</p>
+      </div>
+      <div class="hero-actions no-print">
+        <label class="btn primary" style="display:inline-flex;align-items:center;gap:6px;cursor:pointer">
+          匯入 Excel
+          <input id="import-file" type="file" accept=".xlsx,.xls,.csv" hidden />
+        </label>
+        <button class="btn" id="btn-export-cases">匯出病例</button>
+        <button class="btn" id="btn-export-stats">匯出統計表</button>
+        <button class="btn" id="btn-print">列印統計</button>
+      </div>
+    </header>
+
+    <div class="kpi-row">
+      <div class="kpi"><div class="k">本年度手術總數</div><div class="v" id="kpi-ops">0</div></div>
+      <div class="kpi"><div class="k">本年度手術病人數</div><div class="v" id="kpi-patients">0</div></div>
+      <div class="kpi"><div class="k">同月多次手術病人</div><div class="v" id="kpi-multi">0</div></div>
+      <div class="kpi"><div class="k">待確認分類</div><div class="v" id="kpi-review">0</div></div>
+    </div>
+
+    <nav class="tabs no-print">
+      <button class="tab active" data-view="entry">登錄</button>
+      <button class="tab" data-view="list">病例列表</button>
+      <button class="tab" data-view="stats">統計總表</button>
+      <button class="tab" data-view="multi">同月多次手術</button>
+      <button class="tab" data-view="review">待確認</button>
+    </nav>
+
+    <!-- 登錄 -->
+    <section class="view active" id="view-entry">
+      <div class="panel">
+        <div class="toolbar">
+          <h2 id="form-title" style="margin:0;font-size:1.1rem">登錄手術病例</h2>
+          <div class="spacer"></div>
+          <label class="field">統計年度
+            <select class="year-select"></select>
+          </label>
+        </div>
+        <form id="case-form">
+          <div class="form-grid">
+            <label class="field">開刀日期 *
+              <input id="f-date" type="date" required />
+            </label>
+            <label class="field">病歷號 *
+              <input id="f-chart" type="text" required placeholder="例：92041698" />
+            </label>
+            <label class="field">姓名
+              <input id="f-name" type="text" />
+            </label>
+            <label class="field">執行醫師
+              <input id="f-surgeon" type="text" placeholder="代號或姓名" />
+            </label>
+            <label class="field span-2">診斷 *
+              <textarea id="f-dx" placeholder="Diagnosis"></textarea>
+            </label>
+            <label class="field span-2">手術方式 *
+              <textarea id="f-op" placeholder="Procedure / 術式"></textarea>
+            </label>
+            <label class="field">年紀
+              <input id="f-age" type="text" />
+            </label>
+            <label class="field">性別
+              <select id="f-sex">
+                <option value="">—</option>
+                <option value="M">M</option>
+                <option value="F">F</option>
+              </select>
+            </label>
+            <label class="field">原分類碼（選填）
+              <input id="f-code" type="text" placeholder="例：LI / tumor / IA / PRTR" />
+            </label>
+            <label class="field">S/T/V
+              <input id="f-stv" type="text" placeholder="S / T / V / EV / ST" />
+            </label>
+            <label class="field">急診 E
+              <input id="f-e" type="text" placeholder="E" />
+            </label>
+            <label class="field">標記
+              <input id="f-tag" type="text" placeholder="高位頸椎 / endoscopic…" />
+            </label>
+            <label class="field" style="flex-direction:row;align-items:center;gap:8px;margin-top:22px">
+              <input id="f-la" type="checkbox" /> LA（局部麻醉）
+            </label>
+            <label class="field span-2">手動指定統計分類（可覆寫自動分類）
+              <select id="f-category"></select>
+            </label>
+            <label class="field span-2">備註
+              <input id="f-note" type="text" />
+            </label>
+            <div class="span-4 suggest" id="auto-hint"></div>
+            <div class="span-4 toolbar" style="margin:0">
+              <button class="btn primary" id="btn-save" type="submit">新增並自動分類</button>
+              <button class="btn" id="btn-cancel-edit" type="button" hidden>取消編輯</button>
+            </div>
+          </div>
+        </form>
+        <p class="hint">可直接匯入既有「NS手術總表」Excel（含日期、病歷號、診斷、術式、主治、分類）。資料存在本機瀏覽器，不會上傳伺服器。</p>
+      </div>
+    </section>
+
+    <!-- 列表 -->
+    <section class="view" id="view-list">
+      <div class="panel">
+        <div class="toolbar no-print">
+          <label class="field">年度<select class="year-select"></select></label>
+          <label class="field">月份<select id="filter-month"></select></label>
+          <label class="field">搜尋<input id="search" type="search" placeholder="病歷號／姓名／診斷／術式" /></label>
+          <span class="badge" id="list-count">0 筆</span>
+          <div class="spacer"></div>
+          <button class="btn" id="btn-reclassify">全部重新自動分類</button>
+          <button class="btn danger" id="btn-clear">清空本機資料</button>
+        </div>
+        <div class="table-wrap">
+          <table class="data">
+            <thead>
+              <tr>
+                <th>日期</th><th>病歷號</th><th>姓名</th><th>診斷</th><th>術式</th><th>醫師</th><th>統計分類</th><th></th>
+              </tr>
+            </thead>
+            <tbody id="case-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- 統計 -->
+    <section class="view" id="view-stats">
+      <div class="panel">
+        <div class="toolbar no-print">
+          <label class="field">統計年度<select class="year-select"></select></label>
+          <span class="hint" style="margin:0">綠底＝加總列；紅字＝重點項目。手術病人數＝同月同病歷號只算 1 人。</span>
+        </div>
+        <div class="table-wrap">
+          <table class="stats" id="stats-table"></table>
+        </div>
+        <p class="hint">附註：① 手術數目可同一病人不同次手術。② 病人數目指同一病人，不管幾次手術只算一例。③ EDH、SDH、ICH 三者只擇一（依分類碼／診斷判定）。</p>
+      </div>
+    </section>
+
+    <!-- 同月多次 -->
+    <section class="view" id="view-multi">
+      <div class="panel">
+        <div class="toolbar">
+          <label class="field">年度<select class="year-select"></select></label>
+          <span class="badge red" id="multi-count">0 位病人</span>
+        </div>
+        <div id="multi-list"></div>
+      </div>
+    </section>
+
+    <!-- 待確認 -->
+    <section class="view" id="view-review">
+      <div class="panel">
+        <div class="toolbar">
+          <label class="field">年度<select class="year-select"></select></label>
+          <span class="badge low" id="review-count">0 筆待確認</span>
+        </div>
+        <p class="hint">列出自動分類信心低，或落入 Others 且未手動指定的病例，方便你逐筆修正，避免統計遺漏或算錯。</p>
+        <div class="table-wrap">
+          <table class="data">
+            <thead>
+              <tr><th>日期</th><th>病歷號</th><th>診斷</th><th>術式</th><th>目前分類</th><th></th></tr>
+            </thead>
+            <tbody id="review-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="js/taxonomy.js"></script>
+  <script src="js/classify.js"></script>
+  <script src="js/stats.js"></script>
+  <script src="js/excel.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
