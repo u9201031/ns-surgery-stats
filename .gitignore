@@ -1,3 +1,8 @@
 sample/*.xlsx
 sample/*.xls
 sample/*.csv
+
+# 任何位置的試算表都不進 git（含病人資料）
+*.xlsx
+*.xls
+*.csv
